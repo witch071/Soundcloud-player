@@ -1,0 +1,6 @@
+node_modules/
+dist/
+xray/*.exe
+xray/*.dat
+*.log
+.env

@@ -1,0 +1,53 @@
+{
+  "name": "soundcloud-client",
+  "productName": "SC Player",
+  "version": "1.0.0",
+  "description": "SoundCloud desktop client with built-in proxy",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64",
+    "release": "electron-builder --win --publish always"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "local.sc.player",
+    "productName": "SC Player",
+    "icon": "icon.ico",
+    "files": [
+      "**/*",
+      "!xray/**",
+      "!dist/**"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "extraResources": [
+      {
+        "from": "xray",
+        "to": "xray"
+      }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "witch071",
+        "repo": "sc-player",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  }
+}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<style>
+  body{font:14px Segoe UI,sans-serif;background:#161616;color:#eee;margin:0;padding:20px}
+  h2{margin:0 0 4px;font-weight:600} p{color:#999;margin:0 0 14px;font-size:13px}
+  textarea,select{width:100%;box-sizing:border-box;background:#222;color:#eee;border:1px solid #333;border-radius:8px;padding:10px;font:inherit}
+  textarea{height:110px;resize:vertical;font-family:Consolas,monospace;font-size:12px}
+  .row{display:flex;gap:8px;margin:12px 0} label{display:block;margin:12px 0 6px;color:#bbb}
+  button{flex:1;padding:10px;border:0;border-radius:8px;background:#ff5500;color:#fff;font:inherit;cursor:pointer}
+  button.sec{background:#2c2c2c} button:disabled{opacity:.5}
+  #status{margin-top:14px;padding:10px;border-radius:8px;background:#222}
+  .ok{color:#6ee787}.err{color:#ff7b72}
+</style></head><body>
+<h2>VPN / Прокси</h2>
+<p>Трафик через прокси идёт только из этого приложения, система не затрагивается.</p>
+<label>Ключ Happ: ссылка подписки (https://…) или vless:// / trojan://</label>
+<textarea id="src" spellcheck="false"></textarea>
+<div class="row"><button class="sec" id="load">Загрузить список серверов</button></div>
+<label>Сервер</label>
+<select id="srv"><option value="0">Первый из списка</option></select>
+<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="auto" style="width:auto"> Подключаться при запуске</label>
+<div class="row"><button id="go">Подключить</button><button class="sec" id="off">Отключить</button></div>
+<div id="status">Не подключено</div>
+<script>
+const $ = id => document.getElementById(id);
+const status = (t, c='') => { $('status').className = c; $('status').textContent = t; };
+async function load() {
+  $('load').disabled = true; status('Загружаю…');
+  const r = await vpn.list($('src').value);
+  $('load').disabled = false;
+  if (!r.ok) return status(r.error, 'err');
+  $('srv').innerHTML = r.names.map((n,i)=>`<option value="${i}"></option>`).join('');
+  [...$('srv').options].forEach((o,i)=>o.textContent = r.names[i]);
+  status('Найдено серверов: ' + r.names.length);
+}
+$('load').onclick = load;
+$('go').onclick = async () => {
+  $('go').disabled = true; status('Подключаюсь…');
+  const r = await vpn.connect({ source: $('src').value, index: +$('srv').value, autoConnect: $('auto').checked });
+  $('go').disabled = false;
+  r.ok ? status('Подключено: ' + r.server, 'ok') : status(r.error, 'err');
+};
+$('off').onclick = async () => { await vpn.disconnect(); status('Не подключено'); };
+vpn.onStatus(d => status(d.note || 'Не подключено', d.connected ? 'ok' : 'err'));
+vpn.state().then(s => {
+  $('src').value = s.source || ''; $('auto').checked = !!s.autoConnect;
+  if (s.connected) status('Подключено: ' + s.server, 'ok');
+  if (s.source) load().then(() => { $('srv').value = s.index || 0; if (s.connected) status('Подключено: ' + s.server, 'ok'); });
+});
+</script></body></html>
